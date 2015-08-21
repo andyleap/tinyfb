@@ -1,6 +1,8 @@
 package tinyfb
 
 import (
+	"image/draw"
+	"sync"
 	"image"
 	"unsafe"
 	"syscall"
@@ -19,7 +21,9 @@ type TinyFB struct {
 	surface_width int32
 	surface_height int32
 	bitmap_header *win.BITMAPINFO
-	cached_buffer uintptr
+	
+	buffer *image.RGBA
+	bufferlock sync.Mutex
 	
 	wc win.WNDCLASSEX
 }
@@ -28,12 +32,12 @@ func (t *TinyFB) wndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) (res
 	result = 0
 	switch msg {
 	case uint32(win.WM_PAINT):
-		if t.cached_buffer != 0 {
-			var size win.RECT
-			win.GetClientRect(t.wnd, &size)
-			win.StretchDIBits(t.window_hdc, 0, 0, size.Right, size.Bottom, 0, 0, t.surface_width, t.surface_height, t.cached_buffer, t.bitmap_header, 0, win.SRCCOPY)
-			win.ValidateRect(t.wnd, nil)
-		}
+		var size win.RECT
+		win.GetClientRect(t.wnd, &size)
+		t.bufferlock.Lock()
+		win.StretchDIBits(t.window_hdc, 0, 0, size.Right, size.Bottom, 0, 0, t.surface_width, t.surface_height, uintptr(unsafe.Pointer(&t.buffer.Pix[0])), t.bitmap_header, 0, win.SRCCOPY)
+		t.bufferlock.Unlock()
+		win.ValidateRect(t.wnd, nil)
     default:
 		result = win.DefWindowProc(hwnd, msg, wParam, lParam)
 	}
@@ -42,6 +46,7 @@ func (t *TinyFB) wndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) (res
 
 func New(title string, width, height int32) *TinyFB {
 	t := &TinyFB{title: title, width: width, height: height}
+	t.buffer = image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
 	return t
 }
 
@@ -92,7 +97,9 @@ func (t *TinyFB) Run() {
 }
 
 func (t *TinyFB) Update(buffer *image.RGBA) {
-	t.cached_buffer = uintptr(unsafe.Pointer(&buffer.Pix[0]))
+	t.bufferlock.Lock()
+	draw.Draw(t.buffer, t.buffer.Rect, buffer, image.Point{0,0}, draw.Src)
+	t.bufferlock.Unlock()
 	win.InvalidateRect(t.wnd, nil, true)
 	win.SendMessage(t.wnd, win.WM_PAINT, 0, 0)
 }
