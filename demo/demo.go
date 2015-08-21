@@ -23,11 +23,13 @@ func main() {
 	
 	i := image.NewRGBA(image.Rect(0, 0, 320, 240))
 	step := 0
+	xstep := 0
+	ystep := 0
 	frame := time.Now()
 	for !quit {
 		for x := 0; x <= 320; x++ {
 			for y := 0; y <= 240; y++ {
-				noise := perlin.Get3D(float64(x)*0.03, float64(y)*0.03, float64(step)*0.05)
+				noise := perlin.Get3D(float64(x+xstep)*0.03, float64(y+ystep)*0.03, float64(step)*0.05)
 				val := uint8(math.Floor((noise*0.4 + 0.5) * 250))
 				i.SetRGBA(x, y, color.RGBA{
 					R: val,
@@ -37,7 +39,18 @@ func main() {
 				})
 			}
 		}
-		
+		if t.Keys[tinyfb.VK_RIGHT] {
+			xstep+=10
+		}
+		if t.Keys[tinyfb.VK_LEFT] {
+			xstep-=10
+		}
+		if t.Keys[tinyfb.VK_UP] {
+			ystep+=10
+		}
+		if t.Keys[tinyfb.VK_DOWN] {
+			ystep-=10
+		}
 		t.Update(i)
 		step += 1
 		end := time.Now()

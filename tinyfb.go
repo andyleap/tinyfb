@@ -26,6 +26,8 @@ type TinyFB struct {
 	bufferlock sync.Mutex
 	
 	wc win.WNDCLASSEX
+	
+	Keys map[int]bool
 }
 
 func (t *TinyFB) wndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) (result uintptr) {
@@ -38,6 +40,10 @@ func (t *TinyFB) wndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) (res
 		win.StretchDIBits(t.window_hdc, 0, 0, size.Right, size.Bottom, 0, 0, t.surface_width, t.surface_height, uintptr(unsafe.Pointer(&t.buffer.Pix[0])), t.bitmap_header, 0, win.SRCCOPY)
 		t.bufferlock.Unlock()
 		win.ValidateRect(t.wnd, nil)
+	case uint32(win.WM_KEYDOWN):
+		t.Keys[int(wParam)] = true
+	case uint32(win.WM_KEYUP):
+		t.Keys[int(wParam)] = false
     default:
 		result = win.DefWindowProc(hwnd, msg, wParam, lParam)
 	}
@@ -45,7 +51,7 @@ func (t *TinyFB) wndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) (res
 }
 
 func New(title string, width, height int32) *TinyFB {
-	t := &TinyFB{title: title, width: width, height: height}
+	t := &TinyFB{title: title, width: width, height: height, Keys: make(map[int]bool)}
 	t.buffer = image.NewRGBA(image.Rect(0, 0, int(width), int(height)))
 	return t
 }
