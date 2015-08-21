@@ -32,6 +32,7 @@ func (t *TinyFB) wndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) (res
 			var size win.RECT
 			win.GetClientRect(t.wnd, &size)
 			win.StretchDIBits(t.window_hdc, 0, 0, size.Right, size.Bottom, 0, 0, t.surface_width, t.surface_height, t.cached_buffer, t.bitmap_header, 0, win.SRCCOPY)
+			win.ValidateRect(t.wnd, nil)
 		}
     default:
 		result = win.DefWindowProc(hwnd, msg, wParam, lParam)

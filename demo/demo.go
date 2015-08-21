@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 	"image/color"
 	"math/rand"
@@ -10,21 +11,31 @@ import (
 
 func main() {
 	t := tinyfb.New("test", 640, 480)
+	rand.Seed(time.Now().UnixNano())
 	go t.Run()
 	
 	i := image.NewRGBA(image.Rect(0, 0, 640, 480))
-	
+	step := 0
 	
 	for {
-		i.SetRGBA(rand.Intn(640), rand.Intn(480), color.RGBA{
-			R: uint8(rand.Intn(255)),
-			G: uint8(rand.Intn(255)),
-			B: uint8(rand.Intn(255)),
-			A: 0,
-		})
+		start := time.Now()
+		for x := 0; x <= 640; x++ {
+			for y := 0; y <= 480; y++ {
+				i.SetRGBA(x, y, color.RGBA{
+					R: uint8((x+step)/3),
+					G: 0,
+					B: uint8(y/2),
+					A: 0,
+				})
+			}
+		}
+		end := time.Now()
+		
+		fmt.Println("Calc Time: ", end.Sub(start))
 		
 		t.Update(i)
-		time.Sleep(time.Second / 20)
+		step += 1
+		time.Sleep(time.Second / 60)
 	}
 	
 }

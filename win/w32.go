@@ -444,7 +444,9 @@ var (
 	translateMessage uintptr
 	dispatchMessage uintptr
 	invalidateRect uintptr
+	validateRect uintptr
 	sendMessage uintptr
+	postMessage uintptr
 	
 	sysAllocString uintptr
 	
@@ -473,7 +475,9 @@ func init() {
 	translateMessage, _ = syscall.GetProcAddress(libuser32, "TranslateMessage")
 	dispatchMessage, _ = syscall.GetProcAddress(libuser32, "DispatchMessageW")
 	invalidateRect, _ = syscall.GetProcAddress(libuser32, "InvalidateRect")
+	validateRect, _ = syscall.GetProcAddress(libuser32, "ValidateRect")
 	sendMessage, _ = syscall.GetProcAddress(libuser32, "SendMessageW")
+	postMessage, _ = syscall.GetProcAddress(libuser32, "PostMessageW")
 	
 	sysAllocString, _ = syscall.GetProcAddress(liboleaut32, "SysAllocString")
 	
@@ -624,8 +628,29 @@ func InvalidateRect(hWnd HWND, lpRect *RECT, bErase bool) bool {
 	return ret != 0
 }
 
+func ValidateRect(hWnd HWND, lpRect *RECT) bool {
+	ret, _, _ := syscall.Syscall(validateRect, 2,
+		uintptr(hWnd),
+		uintptr(unsafe.Pointer(lpRect)),
+		0)
+		
+	return ret != 0
+}
+
 func SendMessage(hWnd HWND, msg uint32, wParam, lParam uintptr) uintptr {
 	ret, _, _ := syscall.Syscall6(sendMessage, 4,
+		uintptr(hWnd),
+		uintptr(msg),
+		wParam,
+		lParam,
+		0,
+		0)
+
+	return ret
+}
+
+func PostMessage(hWnd HWND, msg uint32, wParam, lParam uintptr) uintptr {
+	ret, _, _ := syscall.Syscall6(postMessage, 4,
 		uintptr(hWnd),
 		uintptr(msg),
 		wParam,
