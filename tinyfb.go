@@ -85,7 +85,7 @@ func (t *TinyFB) Run() {
 	t.bitmap_header.BmiHeader.BiBitCount = 32
 	t.bitmap_header.BmiHeader.BiCompression = win.BI_RGB
 	t.bitmap_header.BmiHeader.BiWidth = int32(t.surface_width)
-	t.bitmap_header.BmiHeader.BiHeight = int32(t.surface_height)
+	t.bitmap_header.BmiHeader.BiHeight = -int32(t.surface_height)
 	
 	t.window_hdc = win.GetDC(t.wnd)
 	var msg win.MSG
