@@ -1,11 +1,12 @@
 package win
 
 import (
-	"unsafe"
 	"syscall"
+	"unsafe"
 )
 
 const CW_USEDEFAULT = ^0x7fffffff
+
 // Bitmap compression constants
 const (
 	BI_RGB       = 0
@@ -300,7 +301,7 @@ const (
 )
 
 const (
-	SRCCOPY        = 0x00CC0020
+	SRCCOPY = 0x00CC0020
 )
 
 // mouse button constants
@@ -565,34 +566,34 @@ type BITMAPINFO struct {
 
 var (
 	// Library
-	libgdi32 syscall.Handle
-	libuser32 syscall.Handle
+	libgdi32    syscall.Handle
+	libuser32   syscall.Handle
 	liboleaut32 syscall.Handle
 	libkernel32 syscall.Handle
 
 	stretchDIBits uintptr
-	
-	getClientRect uintptr
-	defWindowProc uintptr
-	loadCursor uintptr
-	registerClassEx uintptr
+
+	getClientRect    uintptr
+	defWindowProc    uintptr
+	loadCursor       uintptr
+	registerClassEx  uintptr
 	adjustWindowRect uintptr
-	createWindowEx uintptr
-	showWindow uintptr
-	getDC uintptr
-	getMessage uintptr
+	createWindowEx   uintptr
+	showWindow       uintptr
+	getDC            uintptr
+	getMessage       uintptr
 	translateMessage uintptr
-	dispatchMessage uintptr
-	invalidateRect uintptr
-	validateRect uintptr
-	sendMessage uintptr
-	postMessage uintptr
-	
+	dispatchMessage  uintptr
+	invalidateRect   uintptr
+	validateRect     uintptr
+	sendMessage      uintptr
+	postMessage      uintptr
+	destroyWindow    uintptr
+
 	sysAllocString uintptr
-	
+
 	getLastError uintptr
 )
-
 
 func init() {
 	// Library
@@ -600,9 +601,9 @@ func init() {
 	libuser32, _ = syscall.LoadLibrary("user32.dll")
 	liboleaut32, _ = syscall.LoadLibrary("oleaut32.dll")
 	libkernel32, _ = syscall.LoadLibrary("kernel32.dll")
-	
+
 	stretchDIBits, _ = syscall.GetProcAddress(libgdi32, "StretchDIBits")
-	
+
 	getClientRect, _ = syscall.GetProcAddress(libuser32, "GetClientRect")
 	defWindowProc, _ = syscall.GetProcAddress(libuser32, "DefWindowProcW")
 	loadCursor, _ = syscall.GetProcAddress(libuser32, "LoadCursorW")
@@ -618,9 +619,10 @@ func init() {
 	validateRect, _ = syscall.GetProcAddress(libuser32, "ValidateRect")
 	sendMessage, _ = syscall.GetProcAddress(libuser32, "SendMessageW")
 	postMessage, _ = syscall.GetProcAddress(libuser32, "PostMessageW")
-	
+	destroyWindow, _ = syscall.GetProcAddress(libuser32, "DestroyWindow")
+
 	sysAllocString, _ = syscall.GetProcAddress(liboleaut32, "SysAllocString")
-	
+
 	getLastError, _ = syscall.GetProcAddress(libkernel32, "GetLastError")
 }
 
@@ -773,7 +775,7 @@ func ValidateRect(hWnd HWND, lpRect *RECT) bool {
 		uintptr(hWnd),
 		uintptr(unsafe.Pointer(lpRect)),
 		0)
-		
+
 	return ret != 0
 }
 
@@ -795,6 +797,15 @@ func PostMessage(hWnd HWND, msg uint32, wParam, lParam uintptr) uintptr {
 		uintptr(msg),
 		wParam,
 		lParam,
+		0,
+		0)
+
+	return ret
+}
+
+func DestroyWindow(hWnd HWND) uintptr {
+	ret, _, _ := syscall.Syscall(destroyWindow, 1,
+		uintptr(hWnd),
 		0,
 		0)
 
