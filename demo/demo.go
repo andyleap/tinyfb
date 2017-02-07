@@ -1,13 +1,15 @@
 package main
 
 import (
-	"time"
-	"image/color"
-	"math/rand"
-	"math"
 	"image"
+	"image/color"
+	"log"
+	"math"
+	"math/rand"
+	"time"
+
 	"github.com/andyleap/tinyfb"
-	
+
 	"github.com/tbogdala/noisey"
 )
 
@@ -20,12 +22,29 @@ func main() {
 		quit = true
 	}()
 	perlin := noisey.NewOpenSimplexGenerator(r)
-	
+
 	i := image.NewRGBA(image.Rect(0, 0, 400, 400))
 	step := 0
 	xstep := 0
 	ystep := 0
 	frame := time.Now()
+
+	t.Char(func(char string, mods int) {
+		switch char {
+		case "Up":
+			ystep -= 10
+		case "Down":
+			ystep += 10
+		case "Left":
+			xstep -= 10
+		case "Right":
+			xstep += 10
+		default:
+			log.Println(char, mods)
+
+		}
+	})
+
 	for !quit {
 		for x := 0; x <= 400; x++ {
 			for y := 0; y <= 400; y++ {
@@ -39,26 +58,14 @@ func main() {
 				})
 			}
 		}
-		if t.Keys[tinyfb.VK_RIGHT] {
-			xstep+=10
-		}
-		if t.Keys[tinyfb.VK_LEFT] {
-			xstep-=10
-		}
-		if t.Keys[tinyfb.VK_UP] {
-			ystep-=10
-		}
-		if t.Keys[tinyfb.VK_DOWN] {
-			ystep+=10
-		}
 		t.Update(i)
 		step += 1
 		end := time.Now()
-		delta := end.Sub(frame).Nanoseconds() - (time.Second/60).Nanoseconds()
+		delta := end.Sub(frame).Nanoseconds() - (time.Second / 60).Nanoseconds()
 		if delta < 0 {
 			time.Sleep(time.Duration(-delta))
 		}
 		frame = time.Now()
 	}
-	
+
 }
