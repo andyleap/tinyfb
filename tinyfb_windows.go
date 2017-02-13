@@ -3,10 +3,12 @@ package tinyfb
 import (
 	"image"
 	"image/draw"
+	"log"
 	"reflect"
 	"runtime"
 	"sync"
 	"syscall"
+	"unicode"
 	"unsafe"
 
 	"github.com/andyleap/tinyfb/win"
@@ -31,6 +33,7 @@ type tinyFB struct {
 	wc win.WNDCLASSEX
 
 	char func(char string, mods int)
+	key  func(key string, mods int, press bool)
 }
 
 func (t *tinyFB) wndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) (result uintptr) {
@@ -43,9 +46,19 @@ func (t *tinyFB) wndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) (res
 		win.StretchDIBits(t.window_hdc, 0, 0, size.Right, size.Bottom, 0, 0, t.surface_width, t.surface_height, uintptr(unsafe.Pointer(&t.buffer.Pix[0])), t.bitmap_header, 0, win.SRCCOPY)
 		t.bufferlock.Unlock()
 		win.ValidateRect(t.wnd, nil)
+
 	case uint32(win.WM_KEYDOWN):
 		if t.char != nil {
+			val := win.MapVirtualKey(uint32(wParam), win.MAPVK_VK_TO_CHAR)
 			char := ""
+			if val != 0 {
+				char = string(rune(val))
+
+				if unicode.IsLetter(rune(val)) {
+					char = string(unicode.ToLower(rune(val)))
+				}
+				log.Printf("%x %q", int(wParam), char)
+			}
 			switch int(wParam) {
 			case win.VK_UP:
 				char = "Up"
@@ -59,9 +72,49 @@ func (t *tinyFB) wndProc(hwnd win.HWND, msg uint32, wParam, lParam uintptr) (res
 				char = "Insert"
 			case win.VK_DELETE:
 				char = "Delete"
+			case win.VK_SHIFT:
+				char = "Shift"
+			case win.VK_CONTROL:
+				char = "Control"
 			}
-			if char != "" {
-				t.char(char, 0)
+
+			if t.key != nil && char != "" {
+				t.key(char, 0, true)
+			}
+		}
+	case uint32(win.WM_KEYUP):
+		if t.char != nil {
+			val := win.MapVirtualKey(uint32(wParam), win.MAPVK_VK_TO_CHAR)
+			char := ""
+			if val != 0 {
+				char = string(rune(val))
+
+				if unicode.IsLetter(rune(val)) {
+					char = string(unicode.ToLower(rune(val)))
+				}
+				log.Printf("%x %q", int(wParam), char)
+			}
+			switch int(wParam) {
+			case win.VK_UP:
+				char = "Up"
+			case win.VK_DOWN:
+				char = "Down"
+			case win.VK_LEFT:
+				char = "Left"
+			case win.VK_RIGHT:
+				char = "Right"
+			case win.VK_INSERT:
+				char = "Insert"
+			case win.VK_DELETE:
+				char = "Delete"
+			case win.VK_SHIFT:
+				char = "Shift"
+			case win.VK_CONTROL:
+				char = "Control"
+			}
+
+			if t.key != nil && char != "" {
+				t.key(char, 0, false)
 			}
 		}
 	case uint32(win.WM_CHAR):
@@ -154,4 +207,8 @@ func (t *tinyFB) Close() {
 
 func (t *tinyFB) Char(char func(char string, mods int)) {
 	t.char = char
+}
+
+func (t *tinyFB) Key(key func(key string, mods int, press bool)) {
+	t.key = key
 }

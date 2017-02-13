@@ -521,6 +521,13 @@ const (
 	VK_OEM_CLEAR           = 0xFE
 )
 
+const (
+	MAPVK_VK_TO_VSC    = 0
+	MAPVK_VSC_TO_VK    = 1
+	MAPVK_VK_TO_CHAR   = 2
+	MAPVK_VSC_TO_VK_EX = 3
+)
+
 type MSG struct {
 	HWnd    HWND
 	Message uint32
@@ -589,6 +596,7 @@ var (
 	sendMessage      uintptr
 	postMessage      uintptr
 	destroyWindow    uintptr
+	mapVirtualKey    uintptr
 
 	sysAllocString uintptr
 
@@ -620,6 +628,7 @@ func init() {
 	sendMessage, _ = syscall.GetProcAddress(libuser32, "SendMessageW")
 	postMessage, _ = syscall.GetProcAddress(libuser32, "PostMessageW")
 	destroyWindow, _ = syscall.GetProcAddress(libuser32, "DestroyWindow")
+	mapVirtualKey, _ = syscall.GetProcAddress(libuser32, "MapVirtualKeyW")
 
 	sysAllocString, _ = syscall.GetProcAddress(liboleaut32, "SysAllocString")
 
@@ -810,6 +819,15 @@ func DestroyWindow(hWnd HWND) uintptr {
 		0)
 
 	return ret
+}
+
+func MapVirtualKey(code uint32, mapType uint32) uint32 {
+	ret, _, _ := syscall.Syscall(mapVirtualKey, 2,
+		uintptr(code),
+		uintptr(mapType),
+		0)
+
+	return uint32(ret)
 }
 
 func BoolToBOOL(value bool) BOOL {

@@ -17,6 +17,7 @@ type tinyFB struct {
 	win  *xwindow.Window
 	img  *xgraphics.Image
 	char func(char string, mods int)
+	key  func(key string, mods int, press bool)
 }
 
 func New(title string, width, height int32) TinyFB {
@@ -49,6 +50,18 @@ func New(title string, width, height int32) TinyFB {
 				keyStr := keybind.LookupString(X, e.State, e.Detail)
 				t.char(keyStr, int(e.State))
 			}
+			if t.key != nil {
+				keyStr := keybind.LookupString(X, 0, e.Detail)
+				t.key(keyStr, int(e.State), true)
+			}
+		}).Connect(X, win.Id)
+
+	xevent.KeyReleaseFun(
+		func(X *xgbutil.XUtil, e xevent.KeyReleaseEvent) {
+			if t.key != nil {
+				keyStr := keybind.LookupString(X, 0, e.Detail)
+				t.key(keyStr, int(e.State), false)
+			}
 		}).Connect(X, win.Id)
 
 	img := xgraphics.New(X, image.Rect(0, 0, int(width), int(height)))
@@ -77,4 +90,8 @@ func (t *tinyFB) Close() {
 
 func (t *tinyFB) Char(char func(char string, mods int)) {
 	t.char = char
+}
+
+func (t *tinyFB) Key(key func(key string, mods int, press bool)) {
+	t.key = key
 }
