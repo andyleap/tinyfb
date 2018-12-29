@@ -4,8 +4,8 @@ import (
 	"image"
 	"image/draw"
 
-//	"golang.org/x/mobile/event/key"
-//	"golang.org/x/mobile/event/mouse"
+	//	"golang.org/x/mobile/event/key"
+	//	"golang.org/x/mobile/event/mouse"
 
 	"golang.org/x/exp/shiny/driver"
 	"golang.org/x/exp/shiny/screen"
@@ -62,7 +62,9 @@ func (t *tinyFB) Run() {
 }
 
 func (t *tinyFB) Update(buffer *image.RGBA) {
-	t.w.Send(buffer)
+	if t.w != nil {
+		t.w.Send(buffer)
+	}
 }
 
 func (t *tinyFB) Close() {
